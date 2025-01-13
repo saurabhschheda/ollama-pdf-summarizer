@@ -1,10 +1,8 @@
 # Import the necessary libraries
 import PyPDF2
-from langchain_community.vectorstores import FAISS
 from langchain.prompts import ChatPromptTemplate
 from langchain_community.llms.ollama import Ollama
 from IPython.display import display, Markdown, clear_output
-import time
 import streamlit as st
 
 # Initialize the LLaMA model via Ollama
@@ -12,21 +10,9 @@ model_id = "llama3.1"
 model = Ollama(model=model_id)
 
 # Function to extract text from PDF
-# def extract_text_from_pdf(pdf_path):
-#     with open(pdf_path, 'rb') as file:
-#         reader = PyPDF2.PdfReader(file)
-#         text = ""
-#         for page in range(len(reader.pages)):
-#             text += reader.pages[page].extract_text()
-#     return text
-
-
-# Function to extract text from PDF
 def extract_text_from_pdf(file):
     reader = PyPDF2.PdfReader(file)
-    text = ""
-    for page in range(len(reader.pages)):
-        text += reader.pages[page].extract_text()
+    text = [reader.pages[page].extract_text() for page in range(len(reader.pages))]
     return text
 
 def summarize_text(input_text: str):
@@ -67,7 +53,6 @@ def summarize_text(input_text: str):
 st.title("PDF Summarizer with Llama3.1 Model")
 
 uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
-print(dir(uploaded_file))
 
 if uploaded_file is not None:
     # bytes_data = uploaded_file.getvalue()
@@ -78,7 +63,12 @@ if uploaded_file is not None:
     # Summarize the extracted text
     if st.button("Summarize Text"):
         with st.spinner('Generating Summary...'):
-            summary = summarize_text(document_text)
+            summary = ""
+            count = 0
+            for page in document_text:
+                summary += summarize_text(page)
+                count += 1
+                st.markdown(f"Summarized {count} pages")
         
         st.subheader("Summary")
         st.markdown(summary)
